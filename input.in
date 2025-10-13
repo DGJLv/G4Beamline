@@ -1,0 +1,599 @@
+#------------------------------------------------------------------
+ g4ui when=4 "/vis/viewer/set/background 1 1 1"
+ g4ui when=4 "/vis/scene/add/axes 10 10 0 100 mm"
+ g4ui when=4 "/vis/viewer/scaleTo 10 10 1"
+#
+  physics QGSP_BERT
+#                    pfac scales the beam momentum( in GeV/c) and all magnets 
+  param pfac=16.0
+  geometry printGeometry=1 visual=0
+# -----------    making collimators  ---------------------------------
+
+ box Slab1  height=100.0  width=100.0 length=1000.0  material=Fe color=1,0,1
+ box Slab2  height=100.0  width=100.0 length=1500.0  material=Fe color=1,0,1
+ 
+#                         half gap sizs of collimators
+#                         hc1w=20.0 -> lots of events lost here 
+ param   hc1w=50.0
+ param   vc1w=50.0
+ param   hc2w=50.0
+ param   vc2w=50.0
+ 
+ param   mkill=0
+ 
+# F:mt4cv1=50, mt4cv2=50 , mt4ch1=44, mt4ch2=51 mm   July26, 2011
+#  The devices are f:mt....   with 20 mm width, get scraping on h2 right side
+#--------------------------------------------------------------------------------
+#
+
+param histoFile=P16_test_LAPPD2_521734_pi+_input.in
+
+#  param BMT5=-.009828125     original value
+#  good efficiency on Mac with -.009733
+param BMT5=-.00974*$pfac
+
+param DLov2=3048.0/2.0
+
+
+
+#=====================================================
+#     muck with quad currents.    Gradients below are ratios from low P pi mofr
+#     found firse device with "/2.0 "   was I mucking ???  /2 >> 1.5x more beam
+  param g4q6=+0.061*$pfac/2.0
+  param g4q1=+1.09*$g4q6
+  param g4q2=-0.81*$g4q6
+  param g4q3=-0.81*$g4q6
+  param g4q4=+1.09*$g4q6
+  param g4q5=-1.06*$g4q6
+  
+  param g5q1=+0.84*$g4q6
+  param g5q2=-0.75*$g4q6
+  
+#  transport eff = 477/500  1mm .2mr p=1000 
+#  beam size at last detector is about 25 mm diameter
+#=========================================================
+#                           BEAM
+beam gaussian particle=pi+ meanMomentum=1000*$pfac beamZ=36000. \
+	sigmaX=1.0 sigmaY=1.0 sigmaXp=0.0001 sigmaYp=0.0001 sigmaP=10.0*$pfac \
+	nEvents=10000 firstEvent=1 
+
+
+#   when sigmaP<0, sigmaP = half width of square beam about meanMomentum
+#---------------------------------------------------------
+# parameter offset to set MT4TGT as beginning of the beamline
+param offset=-380042.4
+#***: not in input
+#@@: not in excel
+#----------------------------------------------------------
+#MT4PWC***
+#place MT4PWC z=383679.7+$offset x=11789.3 y=-508.3
+
+#----------------------------------------------------------
+#MT4SEM***
+#place MT4SEM z=383917.4+$offset x=11803.9 y=-508.0
+#----------------------------------------------------------
+
+virtualdetector MT4TGT radius=75
+place MT4TGT z=$offset+385042.4 x=11873.0 y=-506.4
+#place MT4TGT z=36030.060
+
+
+#----------------------------------------------------------
+#  MT4Q1 quadrupole:                      DJ  Gradient originally 0
+
+genericquad MT4Q1 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+	gradient=0.068 maxStep=1 ironColor=0,1,1 kill=$mkill
+
+place MT4Q1 z=388997.2+$offset x=12115.9 y=-500.9 gradient=$g4q1
+#place MT4Q1 z=40850.86 gradient=$g4q1
+
+#---------------------------------------------------------
+#  MT4W1 dipole:
+# DJ  orig By=.0083125,   Beam sheet says angle = 0.008 for both W bends
+#    an angle of 0.008 is .458376,  then R = L/.45... = 
+#   experimentwing with Front.in,  get b for first bends = 0.00865
+
+genericbend MT4W1 fieldWidth=139.7 fieldHeight=76.2\
+	fieldLength=3048 ironWidth=279.4 ironHeight=152.4 \
+	ironLength=3048 By=.00878*$pfac kill=$mkill ironColor=0,.5,.5
+place MT4W1 z=392342.5+$offset x=12327.4 y=-496.2
+#place MT4W1 z=44230.61 rotation=Y-.22918
+#----------------------------------------------------------
+# Absorber***
+#----------------------------------------------------------
+#  DJ  add centerRadius
+# cornerarc@@
+#cornerarc z=44230.61-$DLov2 angle=-.458366  centerRadius=381000.
+#----------------------------------------------------------
+# MT5TGT2@@
+virtualdetector MT5TGT2 radius=75
+place MT5TGT2 z=46000.00
+#----------------------------------------------------------
+#	MT5TGT@@
+virtualdetector MT5TGT radius=36.5
+place MT5TGT z=56000.00
+#----------------------------------------------------------
+#  MT4Q2 quadrupole:
+
+genericquad MT4Q2 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+	gradient=-.1131625 maxStep=1 ironColor=0,1,1 kill=$mkill
+place MT4Q2 z=405721.3+$offset x=13250.3 y=-477.4 gradient=$g4q2
+#place MT4Q2 z=57771.26 gradient=$g4q2
+#----------------------------------------------------------
+#  MT4W2 dipole:
+
+genericbend MT4W2 fieldWidth=139.7 fieldHeight=76.2\
+	fieldLength=3048 ironWidth=279.4 ironHeight=152.4 \
+	ironLength=3048 By=.00878*$pfac kill=$mkill ironColor=0,.5,.5
+place MT4W2 z=409368.8+$offset x=13509.8 y=-472.3
+#place MT4W2 z=61460.61
+#----------------------------------------------------------
+#cornerarc@@
+#cornerarc z=61460.61-$DLov2 angle=-.458366  centerRadius=381000.
+
+#----------------------------------------------------------
+#  MT4Q3 quadrupole:
+
+genericquad MT4Q3 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+	gradient=.1131625 maxStep=1 ironColor=0,1,1 kill=$mkill
+place MT4Q3 z=413065.8+$offset x=13790.1 y=-467.0 gradient=$g4q3
+#place MT4Q3 z=65164.81  gradient=$g4q3
+
+
+#----------------------------------------------------------
+#MT4VT***
+#VKICK
+#place MT4VT z=417421.0+$offset x=14127.6	y=-460.9	
+
+
+#mt4cv1@@
+#-------   mt4cv1  1.5 m long ---------------------------
+ place Slab2 rename=hv1a  z=67927.76 y=-50.0-$vc1w
+ place Slab2 rename=hv1b  z=67927.76 y=50.0+$vc1w
+
+#-------------------------------------------------------
+
+virtualdetector MT4FP radius=75  length=20
+place MT4FP z=421261.1 x=14425.1 y=-455.5	
+#place MT4FP z=73928.735
+
+#----------------------------------------------------------
+#		BOX @@
+#   comment out the Pb.   Putting the lead in kills electrons
+#
+#  box Lead material=Pb height=200 width=200 length=1 color=0,0,1
+#  place Lead z=74465.310 
+#--------------------------------------------------------------
+
+
+#--------------------------------------------------
+#MT4PB***
+#place MT4PB z=421.4493+$offset x=14.4397	y=-0.4552	
+
+#mt4hc1@@
+# ------    mt4hc1  1 m long -----------------------------
+
+ #place Slab1 rename=hc1a  z=74963.51 x=-50.0-$hc1w
+ #place Slab1 rename=hc1b  z=74963.51 x=50.0+$hc1w
+
+#---------------------------------------------------------
+#M04RP1***
+#place M04RP1 z=427451.1+$offset x=14904.7 y=-446.7
+#---------------------------------------------------------
+#MS4PG1***
+#place MS4PG1 z=427451.1+$offset x=14904.7 y=-446.7
+#----------------------------------------------------------
+#MT4PG1***
+#place MT4PG1 z=427451.1+$offset x=14904.7 y=-446.7
+#----------------------------------------------------------
+#MT4HT***
+#place MT4HT z=427894.9+$offset x=14939.1 y=-446.2
+#----------------------------------------------------------
+
+#  MT4Q4 quadrupole:
+
+virtualdetector mt4q4d radius=75
+place mt4q4d z=85000.0
+
+genericquad MT4Q4 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+	gradient=.038075 maxStep=1 ironColor=0,1,1 kill=$mkill
+place MT4Q4 z=430705.5+$offset x=15156.9 y=-442.2	gradient=$g4q4
+#place MT4Q4 z=87520.11  gradient=$g4q4
+
+#----------------------------------------------------------
+#	MT4CH2@@
+
+#virtualdetector HC2det radius=75  length=20
+#place HC2det z=89200.0
+
+# place Slab2 rename=hc2a  z=90164.95 x=-50.0-$hc2w
+# place Slab2 rename=hc2b  z=90164.95 x=50.0+$hc2w
+
+#----------------------------------------------------------
+#  MT4Q5 quadrupole:
+
+genericquad MT4Q5 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+gradient=-.056825 maxStep=1 ironColor=0,1,1 kill=$mkill
+place MT4Q5 z=436897.2+$offset x=15636.7 y=-433.5 gradient=$g4q5
+#place MT4Q5 z=93920.91  gradient=$g4q5
+
+#   mt4CV2@@
+# place Slab2 rename=hv2a  z=96565.75 y=-50.0-$vc2w
+# place Slab2 rename=hv2b  z=96565.75 y=50.0+$vc2w
+
+#----------------------------------------------------------
+#  MT4Q6 quadrupole:
+
+genericquad MT4Q6 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+	gradient=.0607075 maxStep=1 ironColor=0,1,1 kill=$mkill
+place MT4Q6 z=443633.3+$offset x=16158.6	y=-424.0 gradient=$g4q6
+#place MT4Q6 z=100686.51  gradient=$g4q6
+
+#----------------------------------------------------------
+#	MT5FP1	Detector   length=2.0 material=Scintillator
+
+virtualdetector MT5FP1 radius=75 length=2.0  material=Scintillator color=1,0,1
+place MT5FP1 z=445532.6+$offset x=16305.8	y=-421.3	
+#place MT5FP1 z=102747.085
+
+#----------------------------------------------------------
+#Window***
+#place Window z=446368.3+$offset x=16370.5 y=-420.1
+#----------------------------------------------------------
+#D134***
+#place D134 z=446881.1+$offset x=16410.3 y=-419.4
+#----------------------------------------------------------
+#Window***
+#place Window z=447488.8+$offset x=16457.3 y=-418.5
+#----------------------------------------------------------
+#MT5VT1***
+#place MT5VT1 z=448198.3+$offset x=16512.4 y=-417.6
+#----------------------------------------------------------
+#	MT5E1 Dipole:
+
+genericbend MT5E1 fieldWidth=139.7 fieldHeight=76.2\
+	fieldLength=3048 ironWidth=279.4 ironHeight=152.4 \
+	ironLength=3048 By=$BMT5 kill=$mkill ironColor=0,.5,.5
+place MT5E1 z=450553.8+$offset x=16688.1 y=-414.3
+#place MT5E1 z=105570.31
+
+#cornerarc@@
+#cornerarc z=106570.31-$DLov2 angle=.509989  centerRadius=342435.0
+
+#	Mt5E2 Dipole
+
+  genericbend MT5E2 fieldWidth=139.7 fieldHeight=76.2\
+	fieldLength=3048 ironWidth=279.4 ironHeight=152.4 \
+	ironLength=3048 By=$BMT5 kill=1 ironColor=0,.5,.5
+	
+  place MT5E2 z=454050.5+$offset x=16927.7 y=-409.3
+  #place MT5E2 z=111101.31
+#cornerarc@@
+ #cornerarc z=111101.31-$DLov2 angle=.509989   centerRadius=342472.0
+#Det5M@@
+  #virtualdetector Det5M radius=75 length=10. 
+  #place Det5M z=111101.31+$DLov2+50.0
+
+#	Mt5E3 Diplole
+
+ genericbend MT5E3 fieldWidth=139.7 fieldHeight=76.2\
+	fieldLength=3048 ironWidth=279.4 ironHeight=152.4 \
+	ironLength=3048 By=$BMT5 kill=1 ironColor=0,.5,.5
+  place MT5E3 z=457549.3+$offset x=17136.2 y=-404.4
+  #place MT5E3 z=114632.31
+
+   #cornerarc z=114632.31-$DLov2 angle=.509989   centerRadius=342472.0
+
+#	MT5E4 Dipole
+
+  genericbend MT5E4 fieldWidth=139.7 fieldHeight=76.2\
+	fieldLength=3048 ironWidth=279.4 ironHeight=152.4 \
+	ironLength=3048 By=$BMT5 kill=1 ironColor=0,.5,.5
+  place MT5E4 z=461049.7+$offset x=17313.6	y=-399.5
+  #place MT5E4 z=118163.31
+
+#cornerarc@@
+  #cornerarc z=118163.31-$DLov2 angle=.509989   centerRadius=342471.0
+
+#	MT5E5 Dipole
+
+ genericbend MT5E5 fieldWidth=139.7 fieldHeight=76.2\
+	fieldLength=3048 ironWidth=279.4 ironHeight=152.4 \
+	ironLength=3048 By=$BMT5 kill=1 ironColor=0,.5,.5
+ place MT5E5 z=464551.7+$offset x=17459.8	y=-394.6
+ #place MT5E5 z=121694.31
+
+#cornerarc@@
+#cornerarc z=121694.31-$DLov2 angle=.509989    centerRadius=342471.0
+
+#MT5DE@@
+ #virtualdetector MT5DE radius=75  length=20.0
+ #place MT5DE z=125000.0
+
+ #virtualdetector MT5DF radius=75
+ #place MT5DF z=130000.0
+
+#  MT5Q1 quadrupole:
+
+genericquad MT5Q1 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+	gradient=.0159592735 maxStep=1 ironColor=0,1,1 kill=1
+place MT5Q1 z=476736.8+$offset x=17866.7 y=-377.6 rotation=Y90
+#place MT5Q1 z=133119.31  gradient=$g5q1
+
+#  MT5Q2 quadrupole:
+
+genericquad MT5Q2 ironLength=3048 fieldLength=3048 apertureRadius=36.5 ironRadius=165 \
+	gradient=-.0319185469 maxStep=1 ironColor=0,1,1 kill=1
+	
+#                           Will use mt5q2 as a ref. point for Cherenkov Ctrs.
+  param Zmt5q2=480988.6+$offset
+  #param Zmt5q2=136776.91
+place MT5Q2 z=$Zmt5q2 x=18006.3 y=-371.6 gradient=$g5q2
+#place MT5Q2 z=$Zmt5q2  gradient=$g5q2
+
+
+
+
+#----------------------------------------------------------
+#MT5VT2***
+#place MT5VT2 z=483768.4+$offset x=18097.5 y=-367.7
+#----------------------------------------------------------
+#MT5HT2***
+#place MT5HT2 z=485405.8+$offset x=18151.3 y=-365.4
+
+#-----------------------------------------------------------
+material FR4 density=1.850 CALCIUM_OXIDE,0.1898 SILICON_DIOXIDE,0.4324 ALUMINUM_OXIDE,0.0917 Br,0.0653 FERRIC_OXIDE,0.0077 MAGNESIUM_OXIDE,0.0052 O,0.2079
+#-----------------------------------------------------------
+#LAPPD Station 1@@
+param WL=230 HL=230
+box LAPPD_Window width=$WL height=$HL length=5 material=GLASS_PLATE
+detector LAPPD_MCP_d width=$WL height=$HL length=12 material=GLASS_PLATE
+box LAPPD_MCP width=$WL height=$HL length=12 material=GLASS_PLATE
+box LAPPD_PCB width=$WL height=$HL length=0.5 material=FR4
+box vacuum width=$WL height=$HL length=0.53 material=Vacuum
+group LAPPD_G length=43.09
+  place LAPPD_Window
+  place vacuum 
+  place LAPPD_MCP_d
+  place vacuum
+  place LAPPD_MCP
+  place vacuum
+  place LAPPD_MCP
+  place LAPPD_PCB
+endgroup
+
+place LAPPD_G z=485900.0+$offset x=18166.2 y=-364.8 rename=LAPPD1
+#place LAPPD1 z=142100.46 ???
+
+
+
+#----------------------------------------------------------
+#	MT5FP2	Detector  length=2.0 material=Scintillator color=1,0,1
+
+virtualdetector MT5FP2 radius=75  color=1,0,1
+place MT5FP2 z=486205.5+$offset x=18177.6 y=-364.3
+#place MT5FP2 z=142133.285
+
+#----------------------------------------------------------
+#Window***
+#place Window z=488388.7+$offset x=18249.2 y=-361.2
+#----------------------------------------------------------
+#Window***
+#place Window z=503671.3+$offset x=18751.0 y=-339.9
+
+
+#-------------------Cherenkov Counters----------------------------------@@
+
+#    in g4beamline pressure is in atmospheres.   1 atm = 14.7 psi.
+#      so pressure is noted in psi/14.7
+
+  param  c1pres=0.01/14.7
+  param  c2pres=15.0/14.7
+
+  param  cherlen=12800.0
+  param Zcher1=$Zmt5q2+25000
+  #param  Zcher1=$Zmt5q2+16095.37
+  material cherg1 A=14 Z=7 state=g pressure=$c1pres density=0.0008*$c1pres
+  material cherg2 A=14 Z=7 state=g pressure=$c2pres density=0.0008*$c2pres
+
+
+#  absorber Ch1 absWindow=WW  windowMaterial=Ti insideLength=5000  \
+#    absMaterial=cherg
+
+  tube Cher1 outerRadius=100.0 length=$cherlen material=cherg1 color=0,0,1
+  tube Cher2 outerRadius=100.0 length=$cherlen material=cherg2 color=0,0,1  
+
+#  tube Mirror material=SILOCON_DIOXIDE outerRadius=20 length=2.5 color=1,0,0
+
+  tube Mirror   material=Si outerRadius=50   length=2.5    color=1,1,0
+  tube ThinWin  material=Ti outerRadius=90   length=0.077  color=1,0,0
+  tube ThickWin material=Ti outerRadius=90.0 length=0.178  color=1,0,0
+
+# upstream Cerenkov  
+  place ThinWin            z=$Zcher1-$cherlen/2.0-2.0
+  place Cher1   z=$Zcher1
+  place Mirror rename=Ch1m z=$Zcher1+$cherlen/2.0+2.0
+  place ThinWin            z=$Zcher1+$cherlen/2.0+4.0
+
+# downstream Cernkkov.  But add g4beamline detector just for fun  
+  virtualdetector DetC radius=150.0 length=2.0
+  place DetC z=$Zcher1+$cherlen/2.0+6.0
+
+  place Cher2 z=$Zcher1+$cherlen+8.
+ # place Cher2 z=$Zcher1+$cherlen+2300.
+  place Mirror rename=ch2m z=$Zcher1+$cherlen*1.5+10.0
+  place ThickWin           z=$Zcher1+$cherlen*1.5+12.0
+
+#----------------------------------------------------------
+#Window***
+#place Window z=520582.2+$offset x=19306.3 y=-316.2
+
+#---------------------------------------------------------
+
+# MT6SC1
+detector MT6SC1 width=105 height=140 length=10 material=Scintillator color=0,1,1
+place MT6SC1 z=520612.6+$offset x=19307.3 y=-316.2 
+
+
+#--------------------------------------------------------
+
+
+material ArCO2_8020 density=0.0018186 Ar,0.8 CARBON_DIOXIDE,0.2
+material ArCO2_7030 density=0.0018367 Ar,0.7 CARBON_DIOXIDE,0.3
+
+
+
+#-----------------------------------------------------
+# MT6PWC1
+param H=115 W=115
+group MT6PWC_G
+  box PWC_AlWindow width=$W height=$H length=0.012 material=Al color=0.7,0.7,0.7
+  detector PWC_GasGap_d width=$W height=$H length=2 material=ArCO2_8020 color=0.8,0.8,1,0.3
+  box PWC_GasGap width=$W height=$H length=2 material=ArCO2_8020 color=0.8,0.8,1,0.3
+  box PWC_Sense width=$W height=$H length=0.0125 material=Al color=0.5,0.5,0.5
+  box PWC_Kapton width=$W height=$H length=0.5 material=KAPTON color=1,0.6,0
+  box PWC_Anode width=$W height=$H length=0.01 material=Cu color=1,1,1
+
+  place PWC_Kapton    
+  place PWC_AlWindow   
+  place PWC_GasGap_d     
+  place PWC_Anode       
+  place PWC_GasGap     
+  place PWC_Sense       
+  place PWC_GasGap     
+  place PWC_Anode       
+  place PWC_GasGap      
+  place PWC_Sense       
+  place PWC_GasGap      
+  place PWC_Anode     
+  place PWC_GasGap   
+  place PWC_AlWindow 
+endgroup
+
+
+place MT6PWC_G z=520643.1+$offset x=19308.3 y=-316.2 rename=MT6PWC1
+#----------------------------------------------------------
+#Window***
+#place Window z=503671.3+$offset x=19308.3 y=-316.2
+
+
+#--------------------------------------------------------
+
+# LAPPD2
+
+place LAPPD_G z=521734.5+$offset x=19344.1 y=-314.6 rename=LAPPD2
+
+
+#--------------------------------------------------------
+
+
+# MT6PWC2
+
+place MT6PWC_G z=530820.0+$offset x=19624.2 y=-302.7 rename=MT6PWC2 
+
+#--------------------------------------------------------
+
+# MT6SC2
+
+detector MT6SC2 width=100 height=140 length=10 material=Scintillator color=0,1,1
+place MT6SC2 z=531270.0+$offset x=19405.3 y=-309.0
+
+#--------------------------------------------------------
+
+# MT6AB
+
+box MT6AB width=3100 height=2290 length=3100 material=Fe color=0,0,6
+place MT6AB z=533105.9+$offset x=19307.3 y=-316.0
+
+virtualdetector MT6AB_v radius=75
+place MT6AB_v z=533105.9+$offset+1555 x=19699.2 y=-299.5
+
+
+#--------------------------------------------------------
+
+# MT6SC3
+
+detector MT6SC3 width=100 height=140 length=10 material=Scintillator color=0,1,1
+place MT6SC3 z=535493.5+$offset x=19795.9 y=-295.4
+
+#--------------------------------------------------------
+
+# ThickBlock
+
+box ThickBlock width=2050 height=2050 length=50.8 material=Fe 
+place ThickBlock z=535596.1+$offset x=19800.0 y=-293.2 
+
+#--------------------------------------------------------
+
+# GEM1
+param w=105 h=100
+group GEM_G
+  box PWC_AlWindow width=$w height=$h length=0.012 material=Al color=0.7,0.7,0.7
+  detector PWC_GasGap_d width=$w height=$h length=2 material=ArCO2_8020 color=0.8,0.8,1,0.3
+  box PWC_GasGap width=$w height=$h length=2 material=ArCO2_8020 color=0.8,0.8,1,0.3
+  box PWC_Sense width=$w height=$h length=0.0125 material=Al color=0.5,0.5,0.5
+  box PWC_Kapton width=$w height=$h length=0.5 material=KAPTON color=1,0.6,0
+  box PWC_Anode width=$w height=$h length=0.01 material=Cu color=1,1,1
+
+  place PWC_Kapton
+  place PWC_AlWindow
+  place PWC_GasGap      
+  place PWC_Anode       
+  place PWC_GasGap      
+  place PWC_Sense       
+  place PWC_GasGap      
+  place PWC_Anode       
+  place PWC_GasGap      
+  place PWC_Sense       
+  place PWC_GasGap      
+  place PWC_Anode       
+  place PWC_GasGap      
+  place PWC_AlWindow
+
+place GEM_G z=536036.1+$offset x=19870.2 y=-293.1 rename=GEM1
+
+#--------------------------------------------------------
+
+
+# GEM2
+
+place GEM_G z=539776.1+$offset x=19992.3 y=-287.2 rename=GEM2
+
+#--------------------------------------------------------
+
+
+# GEM3
+
+place GEM_G z=542866.1+$offset x=20080.1 y=-282.7 rename=GEM3
+
+#--------------------------------------------------------
+
+
+# MT6WC3
+
+place MT6PWC_G z=520643.1+$offset x=20161.2 y=-279.8 rename=MT6PWC3
+
+
+#--------------------------------------------------------
+
+
+# GEM4
+
+place GEM_G  z=550716.1+$offset x=20281.4 y=-274.3 rename=GEM4
+
+#--------------------------------------------------------
+
+# User Experiment
+#...
+
+
+
+#trackcuts killSecondaries=1
+
+
+
+
+
+
+
+
